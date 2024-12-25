@@ -37,5 +37,6 @@ func handleConnection(conn net.Conn) {
 			log.Printf("err while reading from conn: %v, exiting ...", err)
 			return
 		}
+		fmt.Println("received: ", string(buffer[:]))
 	}
 }

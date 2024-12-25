@@ -1,6 +1,6 @@
 # p2 Server
 
-The p2 Server is a lightweight, real-time entity tracking system written in Go. It utilizes TCP connections for efficient communication.
+Player 2 is a lightweight, real-time entity tracking system written in Go. It utilizes TCP connections for efficient communication.
 
 ## Features
 
