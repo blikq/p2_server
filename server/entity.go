@@ -2,17 +2,17 @@ package server
 
 type Entity struct {
 	Id int
-	x_pos int
-	y_pos int
+	X_pos int
+	Y_pos int
 }
 
 func (e *Entity) Move(x int, y int) {
-	e.x_pos = x
-	e.y_pos = y
+	e.X_pos = x
+	e.Y_pos = y
 }
 
 func (e *Entity) GetPosition() (int, int) {
-	return e.x_pos, e.y_pos
+	return e.X_pos, e.Y_pos
 }
 
 func NewEntity(id int, x int, y int) *Entity {
