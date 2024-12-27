@@ -1,83 +1,96 @@
 package server
 
 import (
-	"fmt"
-	"log" // import the log package
+	// "fmt"
+	"log"
 	"net"
 	"encoding/json"
 )
 
-type Ent struct {
-	X_pos int `json:"x_pos"`
-	Y_pos int `json:"y_pos"`
-}
+
 
 var Entities []*Entity
 
 func Start() {
-	id_dis := 0
-	// will use redis later
-	var entities []*Entity
+	id_ := 0
+
 	// Start the server
 	ln, err := net.Listen("tcp", ":8080")
 	if err != nil {
-		fmt.Println("error while listening: ", err)
+		log.Println("error while listening:", err)
+		return
 	}
-	run(ln, id_dis, entities)
 
-
-
-}
-
-func handleConnection(conn net.Conn, id int, entities []*Entity) {
-	// handle connection
-	fmt.Println("connected to: ", conn.RemoteAddr())
-
-	for {
-		var buffer [1024]byte // 1KB buffer to read data
-		_, err := conn.Read(buffer[:])
-		if err != nil {
-			log.Printf("err while reading from conn: %v, exiting ...", err)
-			return
-		}
-
-		fmt.Println("", string(buffer[:]))
-		// a := ` {"X_pos":10,"Y_pos":20}`
-		a := string(buffer[:])
-		var entity Ent
-        fmt.Printf("%v", a)
-		_ = json.Unmarshal([]byte(a), &entity)
-		fmt.Println("entity: ", entity.X_pos)
-
-		// entities[id].Move(entity.X_pos, entity.Y_pos)
-
-		// for _, e := range entities {
-		// 	fmt.Println("entity: ", e)
-		// }
- 
-
-		// fmt.Println("received: ", string(buffer[:]))
-
-		// resp := []byte{'P', 'O', 'N', 'G', '\n'}
-		// _, err = conn.Write(resp)
-		// if err != nil {
-		// 	log.Printf("err while reading from conn: %v, exiting ...", err)
-		// 	return
-		// }
-	}
-}
-
-func run(ln net.Listener, id_dis int, entities []*Entity) {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			// handle error
-			
-			fmt.Println("error tcp: ", err)
+			log.Println("error accepting connection:", err)
 			continue
 		}
-		id_dis++
-		entities = append(entities, NewEntity(id_dis, 0, 0))
-		go handleConnection(conn, id_dis, entities)
+
+		entity := NewEntity(id_, 0, 0)
+		id_++
+		Entities = append(Entities, entity)
+
+		resp, err := json.Marshal(entity)
+		if err != nil {
+			log.Println("error while marshaling entity to JSON:", err)
+			continue
+		}
+
+		_, err = conn.Write(resp)
+		if err != nil {
+			log.Printf("error while writing to conn: %v, exiting ...", err)
+			return
+		}
+
+		go handleConnection(conn)
 	}
 }
+
+
+
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
+
+	log.Println("connected to:", conn.RemoteAddr())
+
+	for {
+		// Read update from the connection
+		buffer := make([]byte, 1024) // 1KB buffer to read data
+		n, err := conn.Read(buffer)
+		if err != nil {
+			log.Printf("error while reading from conn: %v, exiting ...", err)
+			return
+		}
+
+		data := buffer[:n]
+		log.Println("received:", string(data))
+		var entity Entity
+		err = json.Unmarshal(data, &entity)
+		if err != nil {
+			log.Println("error while unmarshaling JSON:", err)
+			continue
+		}
+
+		// Update the entity
+		Entities[entity.Id].Move(entity.X_pos, entity.Y_pos)
+
+		// Send the updated entity back
+		jsonResp, err := json.Marshal(Entities[entity.Id])
+		if err != nil {
+			log.Println("error while marshaling entity to JSON:", err)
+			continue
+		}
+
+		_, err = conn.Write(jsonResp)
+		if err != nil {
+			log.Printf("error while writing to conn: %v, exiting ...", err)
+			return
+		}
+
+
+	}
+}
+
+

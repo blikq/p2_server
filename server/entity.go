@@ -1,9 +1,9 @@
 package server
 
 type Entity struct {
-	Id int
-	X_pos int
-	Y_pos int
+	Id int `json:"id"`
+	X_pos int `json:"x_pos"`
+	Y_pos int `json:"y_pos"`
 }
 
 func (e *Entity) Move(x int, y int) {
