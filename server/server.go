@@ -2,14 +2,17 @@ package server
 
 import (
 	// "fmt"
+	"encoding/json"
+	// "fmt"
 	"log"
 	"net"
-	"encoding/json"
 )
 
-
-
 var Entities []*Entity
+
+type comp struct{
+	Entities []*Entity 	`json:"entities"`
+}
 
 func Start() {
 	id_ := 0
@@ -20,6 +23,7 @@ func Start() {
 		log.Println("error while listening:", err)
 		return
 	}
+
 
 	for {
 		conn, err := ln.Accept()
@@ -48,6 +52,9 @@ func Start() {
 	}
 }
 
+// func update_entity() {
+
+// }
 
 
 func handleConnection(conn net.Conn) {
@@ -77,12 +84,12 @@ func handleConnection(conn net.Conn) {
 		Entities[entity.Id].Move(entity.X_pos, entity.Y_pos)
 
 		// Send the updated entity back
-		jsonResp, err := json.Marshal(Entities[entity.Id])
+		jsonResp, err := json.Marshal(comp{Entities: Entities})
+		// fmt.Println("returned: ", jsonResp)
 		if err != nil {
 			log.Println("error while marshaling entity to JSON:", err)
 			continue
 		}
-
 		_, err = conn.Write(jsonResp)
 		if err != nil {
 			log.Printf("error while writing to conn: %v, exiting ...", err)
