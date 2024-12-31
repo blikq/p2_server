@@ -15,6 +15,28 @@ type comp struct{
 }
 
 func Start() {
+	
+	go createEntity()
+
+
+	// Start the server
+	ln, err := net.Listen("tcp", ":8081")
+	if err != nil {
+		log.Println("error while listening:", err)
+		return
+	}
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			log.Println("error accepting connection:", err)
+			continue
+		}
+		go handleConnection(conn)
+	}
+	
+}
+
+func createEntity() {
 	id_ := 0
 
 	// Start the server
@@ -32,11 +54,28 @@ func Start() {
 			continue
 		}
 
-		entity := NewEntity(id_, 0, 0)
-		id_++
-		Entities = append(Entities, entity)
+		// Read update from the connection
+		buffer := make([]byte, 1024) // 1KB buffer to read data
+		n, err := conn.Read(buffer)
+		if err != nil {
+			log.Printf("error while reading from conn: %v, exiting ...", err)
+			return
+		}
 
-		resp, err := json.Marshal(entity)
+		data := buffer[:n]
+		log.Println("received:", string(data))
+		var entity Entity
+		err = json.Unmarshal(data, &entity)
+		if err != nil {
+			log.Println("error while unmarshaling JSON:", err)
+			continue
+		}
+
+		ent := NewEntity(id_, entity.X_pos, entity.Y_pos)
+		id_++
+		Entities = append(Entities, ent)
+
+		resp, err := json.Marshal(ent)
 		if err != nil {
 			log.Println("error while marshaling entity to JSON:", err)
 			continue
@@ -47,14 +86,8 @@ func Start() {
 			log.Printf("error while writing to conn: %v, exiting ...", err)
 			return
 		}
-
-		go handleConnection(conn)
 	}
 }
-
-// func update_entity() {
-
-// }
 
 
 func handleConnection(conn net.Conn) {
@@ -63,6 +96,20 @@ func handleConnection(conn net.Conn) {
 	log.Println("connected to:", conn.RemoteAddr())
 
 	for {
+		// Send the updated entity back
+		jsonResp, err := json.Marshal(comp{Entities: Entities})
+		// fmt.Println("returned: ", jsonResp)
+		if err != nil {
+			log.Println("error while marshaling entity to JSON:", err)
+			continue
+		}
+		_, err = conn.Write(jsonResp)
+		if err != nil {
+			log.Printf("error while writing to conn: %v, exiting ...", err)
+			return
+		}
+
+		
 		// Read update from the connection
 		buffer := make([]byte, 1024) // 1KB buffer to read data
 		n, err := conn.Read(buffer)
@@ -83,18 +130,6 @@ func handleConnection(conn net.Conn) {
 		// Update the entity
 		Entities[entity.Id].Move(entity.X_pos, entity.Y_pos)
 
-		// Send the updated entity back
-		jsonResp, err := json.Marshal(comp{Entities: Entities})
-		// fmt.Println("returned: ", jsonResp)
-		if err != nil {
-			log.Println("error while marshaling entity to JSON:", err)
-			continue
-		}
-		_, err = conn.Write(jsonResp)
-		if err != nil {
-			log.Printf("error while writing to conn: %v, exiting ...", err)
-			return
-		}
 
 
 	}
