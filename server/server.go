@@ -1,9 +1,9 @@
 package server
 
 import (
-	// "fmt"
+
 	"encoding/json"
-	// "fmt"
+
 	"log"
 	"net"
 )
@@ -86,6 +86,7 @@ func createEntity() {
 			log.Printf("error while writing to conn: %v, exiting ...", err)
 			return
 		}
+		
 	}
 }
 
