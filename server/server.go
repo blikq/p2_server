@@ -1,7 +1,6 @@
 package server
 
 import (
-
 	"encoding/json"
 
 	"log"
@@ -10,14 +9,13 @@ import (
 
 var Entities []*Entity
 
-type comp struct{
-	Entities []*Entity 	`json:"entities"`
+type comp struct {
+	Entities []*Entity `json:"entities"`
 }
 
 func Start() {
-	
-	go createEntity()
 
+	go createEntity()
 
 	// Start the server
 	ln, err := net.Listen("tcp", ":8081")
@@ -33,7 +31,7 @@ func Start() {
 		}
 		go handleConnection(conn)
 	}
-	
+
 }
 
 func createEntity() {
@@ -45,7 +43,6 @@ func createEntity() {
 		log.Println("error while listening:", err)
 		return
 	}
-
 
 	for {
 		conn, err := ln.Accept()
@@ -86,10 +83,9 @@ func createEntity() {
 			log.Printf("error while writing to conn: %v, exiting ...", err)
 			return
 		}
-		
+
 	}
 }
-
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
@@ -110,7 +106,6 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		
 		// Read update from the connection
 		buffer := make([]byte, 1024) // 1KB buffer to read data
 		n, err := conn.Read(buffer)
@@ -131,9 +126,5 @@ func handleConnection(conn net.Conn) {
 		// Update the entity
 		Entities[entity.Id].Move(entity.X_pos, entity.Y_pos)
 
-
-
 	}
 }
-
-
